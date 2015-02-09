@@ -19,7 +19,13 @@ while isRunning do
    end]]
    --parse the forkStatus, set a fork to an updated state
    -- I'm getting an index for the fork a philosopher wants, and then whether they want it or not. ...Do we really need the last one, though
-   isForkInUse[forkStatus[1]] = forkStatus[2]--not isForkInUse[forkStatus[1]]
-   forkChannel:clear()
-   forkChannel:push(isForkInUse)
+   if forkStatus[1] ~= -1 then
+      isForkInUse[forkStatus[1]] = forkStatus[2]--not isForkInUse[forkStatus[1]]
+      forkChannel:clear()
+      forkChannel:push(isForkInUse)
+   end
+
+   if love.thread.getChannel("killThreads"):peek() then
+      isRunning = not isRunning
+   end
 end

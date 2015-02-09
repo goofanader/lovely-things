@@ -10,6 +10,7 @@ lockThread = love.thread.newThread("lock.lua")
 lock = love.thread.getChannel("lock")
 forkThread = love.thread.newThread("forkThread.lua")
 forkChannel = love.thread.getChannel("forks")
+forkLock = love.thread.getChannel("forkLock")
 forkThread:start()
 lockThread:start()
 
@@ -32,20 +33,18 @@ function love.load()
 end
 
 function love.draw()
-   if wantsPrint then
-      -- print the status of the threads
-   end
-   
    local yPos = 10
+   local xPos = 10
+   
    if forkStatus then
       for num, v in ipairs(forkStatus) do
-         love.graphics.print("fork " .. num .. ": " .. tostring(v), 10, yPos)
+         love.graphics.print("fork " .. num .. ": " .. tostring(v), xPos, yPos)
          --table.remove(i, num)
          yPos = yPos + 10
       end
    end
    
-   local xPos = 125
+   xPos = 125
    for i = 1, NUM_PHILOSOPHERS do
       yPos = 10
       local currPhilosopher = philosophers[i]["channel"]:peek()
@@ -94,9 +93,33 @@ function love.threaderror(thread, errorstr)
    print("=====\nThread error!\n" .. errorstr .. "\n=====")
 end
 
-function love.event.quit()
-   --[[if thread:isRunning() then
-      print("moly")
-      thread:wait()
-   end]]
+function love.keypressed(key, isrepeat)
+   if key == 'q' or key == 'escape' then
+      print("exiting")
+      love.thread.getChannel("killThreads"):push("kill")
+      love.event.quit()
+   end
+end
+
+function love.quit()
+   for i = 1, NUM_PHILOSOPHERS do
+      if philosophers[i]["thread"]:isRunning() then
+         forkLock:push({-1})
+         lock:push(1)
+         lock:pop()
+         --philosophers[i]["thread"]:wait()
+      end
+   end
+   
+   if forkThread:isRunning() then
+      forkLock:push({-1})
+   end
+   
+   if lockThread:isRunning() then
+      lock:push(1)
+      lock:pop()
+   end
+   
+   print("we're done, goodbye!")
+   return false
 end

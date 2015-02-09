@@ -21,7 +21,7 @@ philosopherChannel = love.thread.getChannel("philosopher" .. philosopher.id)
 switch = {
    -- THINKING --
    [STATES[1]] = function()
-      sleep(math.random(0, MAX_SECONDS))
+      sleep(math.random(0, MAX_SECONDS), love.thread.getChannel("killThreads"))
       
       lock:demand()
       philosopher.state = STATES[2]
@@ -63,7 +63,7 @@ switch = {
    
    -- EATING --
    [STATES[3]] = function()
-      sleep(math.random(0, MAX_SECONDS))
+      sleep(math.random(0, MAX_SECONDS), love.thread.getChannel("killThreads"))
       
       lock:demand()
       philosopher.state = STATES[4]
