@@ -1,5 +1,6 @@
 require 'philosopher'
 require 'constants'
+local anim8 = require 'anim8'
 
 totalTime = 0
 wantsPrint = false
@@ -28,12 +29,38 @@ function love.load()
       philosophers[i]["channel"] = love.thread.getChannel("philosopher" .. i)
    end
    
-   i = {}
+   -- load images
+   tableImage = love.graphics.newImage("art/Table.png")
+   bowlImage = love.graphics.newImage("art/Bowl.png")
+   forksImage = love.graphics.newImage("art/Forks.png")
+   forksGrid = anim8.newGrid(8, 8, forksImage:getWidth(), forksImage:getHeight())
+   forkPositions = {}
+   local forkPositionNames = {
+      {
+         "up",
+         "up-right",
+         "right",
+         "down-right"
+      },
+      {
+         "down",
+         "down-left",
+         "left",
+         "up-left"
+      }
+   }   
+   
+   for i = 1, 2 do
+      for j = 1, 4 do
+         forkPositions[forkPositionNames[i][j]] = anim8.newAnimation(forksGrid(j, i), 1)
+      end
+   end
+   
    forkStatus = forkChannel:peek()
 end
 
 function love.draw()
-   local yPos = 10
+   --[[local yPos = 10
    local xPos = 10
    
    if forkStatus then
@@ -62,33 +89,37 @@ function love.draw()
          
          philosophers[i]["philosopher"]:draw()
       --end
+   end]]
+   local philosophersToPrint = NUM_PHILOSOPHERS
+   local forksToPrint = NUM_FORKS
+   
+   for i = 1, math.ceil(philosophersToPrint / 2) do
+      local currPhilosopher = philosophers[i]["philosopher"]
+      currPhilosopher:draw()
+   end
+
+   -- print the table
+   love.graphics.draw(tableImage, PIXEL_SIZE, PIXEL_SIZE)
+   
+   for i = 1, math.ceil(forksToPrint / 2) do
+   end
+
+   -- print the bowl
+   love.graphics.draw(bowlImage, PIXEL_SIZE, PIXEL_SIZE)
+   
+   forksToPrint = forksToPrint - math.ceil(forksToPrint / 2)
+   philosophersToPrint = philosophersToPrint - math.ceil(philosophersToPrint / 2)
+   
+   for i = philosophersToPrint, NUM_PHILOSOPHERS do
+      local currPhilosopher = philosophers[i]["philosopher"]
+      --currPhilosopher:draw()
+   end
+   
+   for i = forksToPrint, NUM_FORKS do
    end
 end
 
 function love.update(dt)
-   totalTime = totalTime + dt
-   
-   --print(tostring(thread:isRunning()))
-   --print(thread:getError())
-   
-   if totalTime >= MAX_FRAME_RATE then
-      totalTime = 0
-      
-      -- update the graphics, update philosopher decisions
-      --isForkAvailable[1] = not isForkAvailable[1]
-      --forkChannel:push(isForkAvailable[1])
-   --love.thread.getChannel("killThreads"):push("kill")
-   
-      
-   end
-   
-   --[[while channel:peek() do
-      v = channel:pop()
-      if v then
-         table.insert(i, v)
-         --print("yo")
-      end
-   end]]
    forkStatus = forkChannel:peek()
    
    for i = 1, NUM_PHILOSOPHERS do

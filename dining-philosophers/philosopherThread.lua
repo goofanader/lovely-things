@@ -41,6 +41,13 @@ switch = {
       local noUpdate = false
       local forkStatus = forkChannel:peek()
       
+      if love.thread.getChannel("killThreads"):peek() then
+         --love.thread.getChannel("killThreads"):pop()
+         isRunning = not isRunning
+         --print("wah")
+         return
+      end
+      
       if not philosopher:hasFirstFork() and not forkStatus[philosopher:getFirstFork()] then
          philosopher:setFirstFork(true)
          forkLock:supply({philosopher:getFirstFork(), philosopher:hasFirstFork()})

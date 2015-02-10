@@ -37,7 +37,7 @@ function Philosopher:initialize(id, name, state, useImage)
       
       self.grid = anim8.newGrid(PIXEL_SIZE, PIXEL_SIZE, self.image:getWidth(), self.image:getHeight())
       self.animations = {
-         anim8.newAnimation(self.grid('1-3',1, 5,1, '1-2',1, '4-5',1), MAX_FRAME_RATE)
+         [STATES[1]] = anim8.newAnimation(self.grid('1-3',1, 5,1, '1-3',1, 5,1, '1-2',1, '4-5',1), MAX_FRAME_RATE)
       }
       
       self.x = 10
@@ -109,7 +109,7 @@ end
 
 function Philosopher:update(dt)
    self.overallTime = self.overallTime + dt
-   self.animations[1]:update(dt)
+   self.animations[STATES[1]]:update(dt)
    
    if (self.overallTime >= MAX_FRAME_RATE) then
       self.overallTime = 0
@@ -120,7 +120,7 @@ end
 
 function Philosopher:draw()
    if self.useImage then
-      self.animations[1]:draw(self.image, self.x, self.y)
+      self.animations[STATES[1]]:draw(self.image, self.x, self.y)
    end
 end
 
