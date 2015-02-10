@@ -1,4 +1,4 @@
---require 'philosopher'
+require 'philosopher'
 require 'constants'
 
 totalTime = 0
@@ -23,7 +23,7 @@ function love.load()
    for i = 1, NUM_PHILOSOPHERS do
       philosophers[i] = {}
       philosophers[i]["thread"] = love.thread.newThread("philosopherThread.lua")
-      --philosophers[i]["philosopher"] = Philosopher:new(i, 'A' + i, STATES[2])
+      philosophers[i]["philosopher"] = Philosopher:new(i, string.char(string.byte('A') + i - 1), STATES[2], true)
       philosophers[i]["thread"]:start(i, string.char(string.byte('A') + i - 1), STATES[2])
       philosophers[i]["channel"] = love.thread.getChannel("philosopher" .. i)
    end
@@ -47,9 +47,10 @@ function love.draw()
    xPos = 125
    for i = 1, NUM_PHILOSOPHERS do
       yPos = 10
-      local currPhilosopher = philosophers[i]["channel"]:peek()
+      --local currPhilosopher = philosophers[i]["channel"]:peek()
+      local currPhilosopher = philosophers[i]["philosopher"]:getData()
       
-      if currPhilosopher then
+      --if currPhilosopher then
          love.graphics.print("Philosopher " .. currPhilosopher[2], xPos, yPos)
          
          for num, value in ipairs(currPhilosopher) do
@@ -58,7 +59,9 @@ function love.draw()
          end
          
          xPos = 125 + xPos
-      end
+         
+         philosophers[i]["philosopher"]:draw()
+      --end
    end
 end
 
@@ -87,6 +90,16 @@ function love.update(dt)
       end
    end]]
    forkStatus = forkChannel:peek()
+   
+   for i = 1, NUM_PHILOSOPHERS do
+      local currPhilosopher = philosophers[i]["channel"]:peek()
+      
+      if currPhilosopher then
+         philosophers[i]["philosopher"]:setData(currPhilosopher)
+      end
+      
+      philosophers[i]["philosopher"]:update(dt)
+   end
 end
 
 function love.threaderror(thread, errorstr)

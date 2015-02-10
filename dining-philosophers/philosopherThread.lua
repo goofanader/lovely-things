@@ -17,6 +17,7 @@ math.random()
 --c:push("hi")
 philosopher = Philosopher:new(...)
 philosopherChannel = love.thread.getChannel("philosopher" .. philosopher.id)
+philosopherChannel:push(philosopher:getData())
 
 switch = {
    -- THINKING --
