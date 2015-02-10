@@ -40,8 +40,25 @@ function Philosopher:initialize(id, name, state, useImage)
          [STATES[1]] = anim8.newAnimation(self.grid('1-3',1, 5,1, '1-3',1, 5,1, '1-2',1, '4-5',1), MAX_FRAME_RATE)
       }
       
-      self.x = 10
-      self.y = 10
+      -- determine location on oval
+      local theta = (2 * math.pi / NUM_PHILOSOPHERS) * (self.id - 1)
+      --print("theta:"..theta)
+      local a = 0--(TABLE_WIDTH / 2) + PIXEL_SIZE
+      local b = 0--(TABLE_REAL_HEIGHT / 2)-- + PIXEL_SIZE
+      self.x = a + ((TABLE_WIDTH / 2 + PIXEL_SIZE / 2) * math.cos(theta))
+      self.y = b + ((TABLE_HEIGHT / 2 + PIXEL_SIZE / 2) * math.sin(theta))
+      --print("self.x:"..self.x..", y:"..y)
+      
+      --[[if y < 0 and self.y > 0 then
+         self.y = self.y * -1
+      elseif y > 0 and self.y < 0 then
+         self.y = self.y * -1
+      end]]
+      
+      --print("b/f:("..self.x..","..self.y..")")
+      self.x = self.x + PIXEL_SIZE
+      self.y = self.y + PIXEL_SIZE --(self.id <= math.ceil(NUM_PHILOSOPHERS / 2) and self.y - TABLE_HEIGHT or self.y) + PIXEL_SIZE
+      --print(self.id .. ": ("..self.x..","..self.y..")\n=====")
    end
 end
 
@@ -120,7 +137,8 @@ end
 
 function Philosopher:draw()
    if self.useImage then
-      self.animations[STATES[1]]:draw(self.image, self.x, self.y)
+      self.animations[STATES[1]]:draw(self.image, self.x + PIXEL_SIZE / 2, self.y)
+      love.graphics.print(self.name, self.x + PIXEL_SIZE / 2 - 3, self.y + PIXEL_SIZE + 2)
    end
 end
 

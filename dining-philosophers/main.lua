@@ -15,11 +15,21 @@ forkLock = love.thread.getChannel("forkLock")
 forkThread:start()
 lockThread:start()
 
+isDebugging = false
+
 function love.load()
+   if isDebugging then
+      --allow ZeroBrane Studio to debug from within the IDE
+      if arg[#arg] == "-debug" then
+         require("mobdebug").start()
+      end
+   end
+
    -- need to communicate between the threads 
    -- wait a second. ...Is this even a concurrent thing? Wait yeah it is, cuz I need to randomly pick who eats and who doesnt... irght??????
    
    -- Alanna?
+   love.graphics.setDefaultFilter("nearest")
    
    for i = 1, NUM_PHILOSOPHERS do
       philosophers[i] = {}
@@ -32,31 +42,69 @@ function love.load()
    -- load images
    tableImage = love.graphics.newImage("art/Table.png")
    bowlImage = love.graphics.newImage("art/Bowl.png")
-   forksImage = love.graphics.newImage("art/Forks.png")
-   forksGrid = anim8.newGrid(8, 8, forksImage:getWidth(), forksImage:getHeight())
-   forkPositions = {}
-   local forkPositionNames = {
-      {
-         "up",
-         "up-right",
-         "right",
-         "down-right"
-      },
-      {
-         "down",
-         "down-left",
-         "left",
-         "up-left"
-      }
-   }   
+   --forksImage = love.graphics.newImage("art/Forks.png")
    
-   for i = 1, 2 do
-      for j = 1, 4 do
-         forkPositions[forkPositionNames[i][j]] = anim8.newAnimation(forksGrid(j, i), 1)
+   
+   forkStatus = forkChannel:peek()
+end
+
+function choosePivot(arr, lo, hi)
+   local mid = math.floor((hi + lo) / 2)
+   local pivotTable = {
+      arr[lo].y,
+      arr[mid].y,
+      arr[hi].y
+   }
+   
+   table.sort(pivotTable)
+   
+   if arr[lo].y == pivotTable[2] then
+      return lo
+   elseif arr[mid].y == pivotTable[2] then
+      return mid
+   else
+      return hi
+   end
+end
+
+function partition(arr, lo, hi)
+   local pivotIndex = choosePivot(arr, lo, hi)
+   local pivotValue = arr[pivotIndex].y
+   
+   --swap arr[pivotIndex] and arr[hi]
+   local temp = arr[pivotIndex]
+   arr[pivotIndex] = arr[hi]
+   arr[hi] = temp
+   
+   local storeIndex = lo
+   
+   for i = lo, hi - 1 do
+      if arr[i].y <= pivotValue then
+         --swap arr[i] and arr[storeIndex]
+         temp = arr[i]
+         arr[i] = arr[storeIndex]
+         arr[storeIndex] = temp
+         
+         storeIndex = storeIndex + 1
       end
    end
    
-   forkStatus = forkChannel:peek()
+   --swap arr[storeIndex] and arr[hi]
+   temp = arr[storeIndex]
+   arr[storeIndex] = arr[hi]
+   arr[hi] = temp
+   
+   return storeIndex
+end
+
+function quicksort(arr, lo, hi)
+   if lo < hi then
+      local p = partition(arr, lo, hi)
+      quicksort(arr, lo, p - 1)
+      quicksort(arr, p + 1, hi)
+   end
+   
+   
 end
 
 function love.draw()
@@ -90,29 +138,38 @@ function love.draw()
          philosophers[i]["philosopher"]:draw()
       --end
    end]]
-   local philosophersToPrint = NUM_PHILOSOPHERS
-   local forksToPrint = NUM_FORKS
    
-   for i = 1, math.ceil(philosophersToPrint / 2) do
-      local currPhilosopher = philosophers[i]["philosopher"]
+   --organize philosophers by self.x
+   local philosopherPrint = {}
+   for i = 1, NUM_PHILOSOPHERS do
+      philosopherPrint[i] = philosophers[i]["philosopher"]
+   end
+   
+   quicksort(philosopherPrint, 1, NUM_PHILOSOPHERS)
+   
+   local philosophersToPrint = math.floor(NUM_PHILOSOPHERS / 2)
+   local forksToPrint = math.floor(NUM_FORKS / 2)
+   
+   for i = 1, philosophersToPrint do
+      local currPhilosopher = philosopherPrint[i]
       currPhilosopher:draw()
    end
 
    -- print the table
    love.graphics.draw(tableImage, PIXEL_SIZE, PIXEL_SIZE)
    
-   for i = 1, math.ceil(forksToPrint / 2) do
+   for i = 1, math.floor(forksToPrint / 2) do
    end
 
    -- print the bowl
    love.graphics.draw(bowlImage, PIXEL_SIZE, PIXEL_SIZE)
    
-   forksToPrint = forksToPrint - math.ceil(forksToPrint / 2)
-   philosophersToPrint = philosophersToPrint - math.ceil(philosophersToPrint / 2)
+   forksToPrint = NUM_FORKS - math.floor(forksToPrint / 2)
+   philosophersToPrint = NUM_PHILOSOPHERS - math.floor(NUM_PHILOSOPHERS / 2)
    
    for i = philosophersToPrint, NUM_PHILOSOPHERS do
-      local currPhilosopher = philosophers[i]["philosopher"]
-      --currPhilosopher:draw()
+      local currPhilosopher = philosopherPrint[i]
+      currPhilosopher:draw()
    end
    
    for i = forksToPrint, NUM_FORKS do
